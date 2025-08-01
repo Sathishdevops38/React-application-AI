@@ -1,0 +1,52 @@
+const sqlite3 = require('sqlite3');
+const { open } = require('sqlite');
+const bcrypt = require('bcrypt');
+
+async function initDb() {
+  try {
+    const db = await open({
+      filename: './database.db',
+      driver: sqlite3.Database,
+    });
+
+    // Create users table if it doesn't exist
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE,
+        password TEXT
+      )
+    `);
+
+    // Check if there are any users
+    const userCount = await db.get('SELECT COUNT(*) as count FROM users');
+
+    // If no users, add the initial ones
+    if (userCount.count === 0) {
+      console.log('No users found, populating database with initial data...');
+      const password = 'password';
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const initialUsers = [
+        { email: 'test@example.com', password: hashedPassword },
+        { email: 'user@domain.com', password: hashedPassword },
+        { email: 'user@email.com', password: hashedPassword },
+      ];
+
+      const stmt = await db.prepare('INSERT INTO users (email, password) VALUES (?, ?)');
+      for (const user of initialUsers) {
+        await stmt.run(user.email, user.password);
+      }
+      await stmt.finalize();
+      console.log('Initial users added.');
+    }
+
+    return db;
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  }
+}
+
+module.exports = { initDb };

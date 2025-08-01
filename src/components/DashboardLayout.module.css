@@ -1,0 +1,12 @@
+.dashboardContainer {
+  display: flex;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+}
+
+.dashboardContent {
+  flex-grow: 1;
+  margin-left: 250px; /* Same as sidebar width */
+  padding: 2rem;
+  box-sizing: border-box;
+}
